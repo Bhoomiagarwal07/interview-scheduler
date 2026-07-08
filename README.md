@@ -172,24 +172,4 @@ git push -u origin main
 
 ## Talking about this project in interviews
 
-Be ready to explain, in your own words:
 
-- **The overlap-detection algorithm**: the classic interval check
-  `startA < endB && endA > startB`, why it's needed even though slots have
-  IDs (different slot rows can still represent overlapping time ranges if
-  durations differ), and its O(k) complexity per check.
-- **Why SQL over MongoDB here**: the data is genuinely relational
-  (drives → rooms/slots/interviewers/candidates → bookings), and you need a
-  hard guarantee (a `UNIQUE` constraint) that the database — not just your
-  application code — enforces.
-- **The race condition fix**: why `SELECT ... FOR UPDATE` inside a
-  transaction matters — without it, two admins clicking "book" on the same
-  slot at the same instant could both pass the conflict check before either
-  commit, since basic SELECT reads don't lock rows.
-- **The EJS + React split**: a deliberate architectural choice, not a
-  default — server-rendered pages for a low-traffic internal admin tool vs.
-  a lightweight client-rendered page for public, unauthenticated lookups.
-- **What you'd add with more time**: auto-allocation (treating this as a
-  bipartite matching problem to auto-assign all candidates instead of manual
-  assignment), email/SMS notifications on booking, multi-admin roles per
-  drive.
