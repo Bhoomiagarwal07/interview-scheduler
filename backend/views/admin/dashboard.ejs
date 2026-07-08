@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/head', { title: 'Dashboard' }) %>
+</head>
+<body>
+  <%- include('../partials/navbar', { adminName }) %>
+
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="mb-0">Your Drives</h4>
+      <a href="/admin/drives/new" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-lg"></i> New Drive
+      </a>
+    </div>
+
+    <% if (drives.length === 0) { %>
+      <div class="card p-5 text-center text-muted">
+        No interview drives yet. Create one to start scheduling.
+      </div>
+    <% } else { %>
+      <div class="row g-3">
+        <% drives.forEach(function(drive) { %>
+          <div class="col-md-4">
+            <a href="/admin/drives/<%= drive.id %>" class="text-decoration-none">
+              <div class="card p-3 h-100">
+                <h6 class="mb-1 text-dark"><%= drive.company_name %></h6>
+                <p class="text-muted small mb-2">
+                  <i class="bi bi-calendar3"></i>
+                  <%= new Date(drive.drive_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+                </p>
+                <div class="d-flex gap-3 small text-muted">
+                  <span><i class="bi bi-people"></i> <%= drive.candidate_count %> candidates</span>
+                  <span><i class="bi bi-person-badge"></i> <%= drive.interviewer_count %> panelists</span>
+                </div>
+                <span class="badge bg-success-subtle text-success mt-2" style="width: fit-content;">
+                  <%= drive.booking_count %> scheduled
+                </span>
+              </div>
+            </a>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/head', { title: drive.company_name + ' - Drive' }) %>
+</head>
+<body>
+  <%- include('../partials/navbar', { adminName: '' }) %>
+
+  <div class="container pb-5">
+    <a href="/admin/dashboard" class="text-decoration-none small text-muted">&larr; Back to dashboard</a>
+
+    <div class="d-flex justify-content-between align-items-center mt-2 mb-4">
+      <div>
+        <h4 class="mb-0"><%= drive.company_name %></h4>
+        <p class="text-muted small mb-0">
+          <%= new Date(drive.drive_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) %>
+        </p>
+      </div>
+      <div class="d-flex gap-2 text-center">
+        <div class="card px-3 py-2"><div class="fw-bold"><%= rooms.length %></div><div class="text-muted small">Rooms</div></div>
+        <div class="card px-3 py-2"><div class="fw-bold"><%= slots.length %></div><div class="text-muted small">Slots</div></div>
+        <div class="card px-3 py-2"><div class="fw-bold"><%= interviewers.length %></div><div class="text-muted small">Panelists</div></div>
+        <div class="card px-3 py-2"><div class="fw-bold"><%= candidates.length %></div><div class="text-muted small">Candidates</div></div>
+      </div>
+    </div>
+
+    <ul class="nav nav-tabs mb-4" role="tablist">
+      <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#setup">Setup</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#schedule">Schedule Interview</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#bookings">Bookings (<%= bookings.length %>)</button></li>
+    </ul>
+
+    <div class="tab-content">
+
+      <!-- SETUP TAB -->
+      <div class="tab-pane fade show active" id="setup">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="card p-3">
+              <h6>Rooms</h6>
+              <p class="text-muted small">One room name per line or comma-separated.</p>
+              <form method="POST" action="/admin/drives/<%= drive.id %>/rooms">
+                <textarea name="room_names" class="form-control mb-2" rows="3" placeholder="Room A&#10;Room B&#10;Room C" required></textarea>
+                <button class="btn btn-sm btn-primary">Add Rooms</button>
+              </form>
+              <div class="mt-2 d-flex flex-wrap gap-1">
+                <% rooms.forEach(function(r) { %>
+                  <span class="badge bg-light text-dark border"><%= r.room_name %></span>
+                <% }) %>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card p-3">
+              <h6>Time Slots</h6>
+              <p class="text-muted small">Auto-generate equal-duration slots for the day.</p>
+              <form method="POST" action="/admin/drives/<%= drive.id %>/slots" class="row g-2">
+                <div class="col-4">
+                  <label class="form-label small mb-0">Start</label>
+                  <input type="time" name="start_time" class="form-control form-control-sm" required />
+                </div>
+                <div class="col-4">
+                  <label class="form-label small mb-0">End</label>
+                  <input type="time" name="end_time" class="form-control form-control-sm" required />
+                </div>
+                <div class="col-4">
+                  <label class="form-label small mb-0">Duration (min)</label>
+                  <input type="number" name="duration_minutes" class="form-control form-control-sm" value="20" required />
+                </div>
+                <div class="col-12">
+                  <button class="btn btn-sm btn-primary mt-1">Generate Slots</button>
+                </div>
+              </form>
+              <p class="text-muted small mt-2 mb-0"><%= slots.length %> slot(s) created so far.</p>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card p-3">
+              <h6>Interviewers</h6>
+              <p class="text-muted small">Format per line: <code>Name, email</code></p>
+              <form method="POST" action="/admin/drives/<%= drive.id %>/interviewers">
+                <textarea name="bulk_text" class="form-control mb-2" rows="3" placeholder="Rahul Sharma, rahul@company.com&#10;Priya Verma, priya@company.com" required></textarea>
+                <button class="btn btn-sm btn-primary">Add Interviewers</button>
+              </form>
+              <ul class="small text-muted mt-2 mb-0">
+                <% interviewers.forEach(function(i) { %>
+                  <li><%= i.name %> (<%= i.email %>)</li>
+                <% }) %>
+              </ul>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card p-3">
+              <h6>Candidates</h6>
+              <p class="text-muted small">Format per line: <code>Name, roll_number</code></p>
+              <form method="POST" action="/admin/drives/<%= drive.id %>/candidates">
+                <textarea name="bulk_text" class="form-control mb-2" rows="3" placeholder="Bhoomi Patel, 21CS045&#10;Aman Singh, 21CS046" required></textarea>
+                <button class="btn btn-sm btn-primary">Add Candidates</button>
+              </form>
+              <ul class="small text-muted mt-2 mb-0">
+                <% candidates.forEach(function(c) { %>
+                  <li><%= c.name %> (<%= c.roll_number %>)</li>
+                <% }) %>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCHEDULE TAB -->
+      <div class="tab-pane fade" id="schedule">
+        <div class="card p-4" style="max-width: 600px;">
+          <h6 class="mb-3">Assign Candidate to Slot</h6>
+          <div id="conflict-alert" class="alert alert-danger py-2 small conflict-alert"></div>
+          <div id="success-alert" class="alert alert-success py-2 small conflict-alert"></div>
+
+          <div class="mb-3">
+            <label class="form-label small">Time Slot</label>
+            <select id="slot-select" class="form-select">
+              <% slots.forEach(function(s) { %>
+                <option value="<%= s.id %>">
+                  <%= new Date(s.start_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) %>
+                  -
+                  <%= new Date(s.end_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small">Room</label>
+            <select id="room-select" class="form-select">
+              <% rooms.forEach(function(r) { %>
+                <option value="<%= r.id %>"><%= r.room_name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small">Interviewer</label>
+            <select id="interviewer-select" class="form-select">
+              <% interviewers.forEach(function(i) { %>
+                <option value="<%= i.id %>"><%= i.name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small">Candidate</label>
+            <select id="candidate-select" class="form-select">
+              <% candidates.forEach(function(c) { %>
+                <option value="<%= c.id %>"><%= c.name %> (<%= c.roll_number %>)</option>
+              <% }) %>
+            </select>
+          </div>
+          <button id="book-btn" class="btn btn-primary">
+            <i class="bi bi-check2-circle"></i> Schedule Interview
+          </button>
+        </div>
+      </div>
+
+      <!-- BOOKINGS TAB -->
+      <div class="tab-pane fade" id="bookings">
+        <div class="card p-3">
+          <% if (bookings.length === 0) { %>
+            <p class="text-muted text-center py-4 mb-0">No interviews scheduled yet.</p>
+          <% } else { %>
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>Time</th><th>Room</th><th>Interviewer</th><th>Candidate</th><th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% bookings.forEach(function(b) { %>
+                  <tr data-booking-id="<%= b.id %>">
+                    <td>
+                      <%= new Date(b.start_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) %>
+                      -
+                      <%= new Date(b.end_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) %>
+                    </td>
+                    <td><%= b.room_name %></td>
+                    <td><%= b.interviewer_name %></td>
+                    <td><%= b.candidate_name %></td>
+                    <td>
+                      <button class="btn btn-sm btn-outline-danger cancel-btn" data-id="<%= b.id %>">Cancel</button>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          <% } %>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const driveId = <%= drive.id %>;
+
+    document.getElementById('book-btn').addEventListener('click', async () => {
+      const slot_id = document.getElementById('slot-select').value;
+      const room_id = document.getElementById('room-select').value;
+      const interviewer_id = document.getElementById('interviewer-select').value;
+      const candidate_id = document.getElementById('candidate-select').value;
+
+      const conflictAlert = document.getElementById('conflict-alert');
+      const successAlert = document.getElementById('success-alert');
+      conflictAlert.style.display = 'none';
+      successAlert.style.display = 'none';
+
+      try {
+        const res = await fetch(`/api/drives/${driveId}/bookings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slot_id, room_id, interviewer_id, candidate_id }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          conflictAlert.textContent = data.message;
+          conflictAlert.style.display = 'block';
+          return;
+        }
+
+        successAlert.textContent = 'Interview scheduled successfully! Reloading...';
+        successAlert.style.display = 'block';
+        setTimeout(() => window.location.reload(), 900);
+      } catch (err) {
+        conflictAlert.textContent = 'Network error, please try again.';
+        conflictAlert.style.display = 'block';
+      }
+    });
+
+    document.querySelectorAll('.cancel-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Cancel this interview slot?')) return;
+        const id = btn.dataset.id;
+        await fetch(`/api/bookings/${id}`, { method: 'DELETE' });
+        window.location.reload();
+      });
+    });
+  </script>
+</body>
+</html>

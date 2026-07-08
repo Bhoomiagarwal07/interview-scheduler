@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/head', { title: 'New Drive' }) %>
+</head>
+<body>
+  <%- include('../partials/navbar', { adminName: '' }) %>
+
+  <div class="container" style="max-width: 500px;">
+    <a href="/admin/dashboard" class="text-decoration-none small text-muted">&larr; Back to dashboard</a>
+    <div class="card p-4 mt-3">
+      <h5 class="mb-3">Create a New Interview Drive</h5>
+
+      <% if (error) { %>
+        <div class="alert alert-danger py-2 small"><%= error %></div>
+      <% } %>
+
+      <form method="POST" action="/admin/drives">
+        <div class="mb-3">
+          <label class="form-label small">Company name</label>
+          <input type="text" name="company_name" class="form-control" placeholder="e.g. TCS, Infosys, Amazon" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label small">Drive date</label>
+          <input type="date" name="drive_date" class="form-control" required />
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Create Drive</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>
