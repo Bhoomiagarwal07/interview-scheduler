@@ -1,5 +1,6 @@
 # Interview Panel Scheduler
-
+🔗 **Live Demo:** https://interview-scheduler-eight.vercel.app
+🔗 **Backend API:** https://interview-scheduler-backend-mmwm.onrender.com/
 A full-stack conflict-free interview scheduling system for placement drives —
 built to solve the real scheduling chaos of campus placements: multiple
 interviewers, multiple candidates, limited rooms, zero double-bookings.
