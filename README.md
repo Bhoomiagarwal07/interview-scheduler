@@ -170,6 +170,6 @@ git push -u origin main
 
 `.env` files are already gitignored in both `backend/` and `frontend/`.
 
-## Talking about this project in interviews
+
 
 
