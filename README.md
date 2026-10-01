@@ -157,6 +157,17 @@ functions aren't a great fit for session-based apps).
 3. Environment variable: `VITE_API_URL` = your Render backend URL + `/api`.
 4. Deploy.
 
+## Testing
+cd backend && npm test
+Unit tests cover the interval-overlap logic (partial overlap, back-to-back slots,
+nested slots, different slot durations).
+
+## Known limitations / future improvements
+- Concurrent bookings are serialized per slot using SELECT ... FOR UPDATE;
+  overlapping slots of different lengths could be protected further by
+  locking the interviewer's existing bookings.
+- Add integration tests for the booking API.
+
 ### GitHub
 
 ```bash
